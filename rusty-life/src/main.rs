@@ -1,20 +1,83 @@
 extern crate rand;
+extern crate cursive;
 
+use std::env;
+use cursive::{Cursive};
 use std::{thread, time};
 use rand::Rng;
+use cursive::traits::*;
+use cursive::views::{Dialog, TextView};
 
 fn main() {
-    println!("Rusty Life!");
-    let matrix_size = 20;
-    println!("Matrix size is {}", matrix_size);
+    let args: Vec<String> = env::args().collect();
 
-    let mut life = randomize_life(matrix_size);
+    let size = &args[1];
+    let matrix_size = size.parse().unwrap();
 
-    loop {
-        print_life(&life);
-        thread::sleep(time::Duration::from_millis(3000));
-        life = evolve(&life);
+    let mode = &args[2];
+    if mode == "ugly" {
+        ugly_life(matrix_size);
+    } else if mode == "pretty" {
+        pretty_life(matrix_size);
     }
+}
+
+fn ugly_life(matrix_size: i32) {
+    let mut iterations = 0;
+    let mut life: Vec<Vec<bool>> = Vec::new();
+    loop {
+        if iterations == 0 {
+            life = randomize_life(matrix_size);
+        } else {
+            life = evolve(&life);
+        }
+        iterations+=1;
+        let printed_life = print_life(&life);
+        println!("#\n# Iteration: {}\n#", iterations);
+        println!("{}", printed_life);
+        thread::sleep(time::Duration::from_millis(3000));
+    }
+}
+
+fn pretty_life(matrix_size: i32) {
+    let mut siv = Cursive::default();
+    siv.set_fps(20);
+
+    let cb_sink = siv.cb_sink().clone();
+
+    thread::spawn(move || {
+        let mut iterations = 0;
+        let mut life: Vec<Vec<bool>> = Vec::new();
+        loop {
+            if iterations == 0 {
+                life = randomize_life(matrix_size);
+            } else {
+                life = evolve(&life);
+            }
+            iterations+=1;
+            let printed_life = print_life(&life);
+            let new_title = format!("Rusty Life: {}", iterations);
+            cb_sink.send(Box::new(|s: &mut Cursive| {
+                s.call_on_id("text", |text: &mut TextView| {
+                    text.set_content(printed_life);
+                });
+                s.call_on_id("dialog", |dialog: &mut Dialog| {
+                    dialog.set_title(new_title);
+                });
+            }));
+            thread::sleep(time::Duration::from_millis(3000));
+        }
+    });
+
+    siv.add_layer(
+        Dialog::new()
+            .title("Rusty Life")
+            .padding((1, 1, 1, 0))
+            .content(TextView::new("").with_id("text"))
+            .with_id("dialog")
+    );
+
+    siv.run();
 }
 
 fn randomize_life(matrix_size: i32) -> Vec<Vec<bool>> {
@@ -79,7 +142,7 @@ fn is_cell_active(matrix: &Vec<Vec<bool>>, row: i32, column: i32) -> bool {
     return true;
 }
 
-fn print_life(matrix: &Vec<Vec<bool>>) {
+fn print_life(matrix: &Vec<Vec<bool>>) -> std::string::String {
     let mut printable_life: std::string::String = "".to_string();
     for row in matrix {
         for column in row {
@@ -93,5 +156,5 @@ fn print_life(matrix: &Vec<Vec<bool>>) {
         printable_life = printable_life.to_owned() + "\n";
     }
 
-    println!("{}", printable_life);
+    return printable_life;
 }

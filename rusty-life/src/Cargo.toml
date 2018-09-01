@@ -5,6 +5,7 @@ authors = ["noamt <noam@10ne.org>"]
 
 [dependencies]
 rand = "0.4.0"
+cursive = "0.9"
 
 [[bin]]
 name = "rusty_life"
