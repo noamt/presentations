@@ -1,0 +1,11 @@
+[package]
+name = "rusty_life"
+version = "0.1.0"
+authors = ["noamt <noam@10ne.org>"]
+
+[dependencies]
+rand = "0.4.0"
+
+[[bin]]
+name = "rusty_life"
+path = "main.rs"
