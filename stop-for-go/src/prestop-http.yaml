@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: stop-for-nothing
+spec:
+  containers:
+  - name: stop-for-nothing 
+    image: my-app
+    lifecycle:
+      preStop:
+        httpGet:
+          path: /shutdown
+          port: 1337
